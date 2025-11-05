@@ -93,24 +93,30 @@ def get_retrieval_context(keywords: str) -> list:
     
     try:
         # Kita gunakan httpx.post untuk memanggil API kita
-        with httpx.Client(timeout=30.0) as client:
+        # Timeout 30.0 sudah benar untuk VSM
+        with httpx.Client(timeout=30.0) as client: 
             response = client.post(RETRIEVAL_API_URL, json=payload)
             
-            # Cek jika API merespons dengan sukses (200 OK)
             if response.status_code == 200:
                 context_data = response.json()
                 print(f"INFO (API-Call): Berhasil mengambil {len(context_data)} data konteks.")
                 return context_data
             else:
-                print(f"ERROR (API-Call): API Fase 1 mengembalikan error {response.status_code} - {response.text}")
+                # PERUBAHAN KRITIS: Cetak respons non-200 penuh
+                print(f"❌ FATAL (API-Call): API Fase 1 mengembalikan error {response.status_code}.")
+                print(f"❌ RESPONS SERVER: {response.text[:200]}") # Cetak 200 karakter pertama
                 return []
                 
     except httpx.ConnectError as e:
-        print(f"❌ ERROR (API-Call): Gagal terhubung ke API Fase 1 di {RETRIEVAL_API_URL}.")
-        print("   Pastikan server FastAPI (Fase 1) Anda sedang berjalan di terminal lain!")
+        # PERUBAHAN KRITIS: Cetak error koneksi
+        print(f"❌ FATAL (API-Call): Gagal terhubung ke API. Pastikan URL & Port sudah benar.")
+        print(f"❌ URL YANG DIGUNAKAN: {RETRIEVAL_API_URL}")
+        import traceback
+        traceback.print_exc() # Mencetak traceback lengkap
         return []
     except Exception as e:
-        print(f"ERROR (API-Call): Error tidak diketahui: {e}")
+        # PERUBAHAN KRITIS: Tangkap error lain
+        print(f"❌ FATAL (API-Call): Error tidak terduga saat memanggil API: {e}")
         return []
 
 # =====================================================================
